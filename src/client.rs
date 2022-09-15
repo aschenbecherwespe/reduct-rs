@@ -1,7 +1,7 @@
 use hyper::Client as HyperClient;
-use hyper::body::HttpBody as _;
 use hyper::Uri;
 use std::str;
+
 
 pub struct Client {
     url: Uri
@@ -10,13 +10,9 @@ pub struct Client {
 impl Client {
     async fn info(self) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let http_client = HyperClient::new();
-        let mut res = http_client.get(self.url).await?;
-        let mut body = "".to_owned();
-        while let Some(next) = res.data().await {
-            let chunk = next?;
-            body.push_str(str::from_utf8(&chunk)?);
-        }
-        println!("{}", body);
+        let res = http_client.get(self.url).await?;
+        let body = hyper::body::to_bytes(res).await?;
+        println!("{}", str::from_utf8(&body)?);
         Ok(())
     }
 }
