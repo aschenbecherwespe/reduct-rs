@@ -38,26 +38,19 @@ pub struct ServerInfo {
 
 
 pub struct Client {
-    url: Uri
+    pub url: String
 }
 
 impl Client {
-    async fn info(self) -> Result<ServerInfo, Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn info(self) -> Result<ServerInfo, Box<dyn std::error::Error + Send + Sync>> {
         let http_client = HyperClient::new();
-        let res = http_client.get(self.url).await?;
+        let path = "/api/v1/info";
+        let info_url_str  = self.url.to_owned().clone() + path; 
+        let info_uri = info_url_str.parse::<Uri>().unwrap();
+        let res = http_client.get(info_uri).await?;
         let body = hyper::body::to_bytes(res).await?;
         println!("{}", str::from_utf8(&body)?);
         let server: ServerInfo = serde_json::from_slice(&body).unwrap();
         Ok(server)
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    #[tokio::test]
-    async fn test_info() {
-        let client = Client { url: Uri::from_static("http://localhost:8383/info") };
-        let res = client.info().await;
     }
 }
